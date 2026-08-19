@@ -1,6 +1,6 @@
 # Agentic Trading System
 
-Agentic Trading System is a small prototype that fetches Indian market news, and agents recommends stocks ,compute the movements and execute orders
+Agentic Trading System is a small prototype that fetches Indian market news, and agents recommends stocks ,compute the movements and execute orders<br>
 **Note:The Work is under progress right now.**
 
 ## Features
