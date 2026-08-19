@@ -2,7 +2,7 @@
 
 Provides a simple CLI entrypoint `main()` that runs the news->stock recommendation agent.
 """
-from .news_agent import run_sync, analyze_and_recommend  # noqa: F401
+from .agent.news_agent import analyze_and_recommend, run_sync  # noqa: F401
 
 
 def main() -> None:

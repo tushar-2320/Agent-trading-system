@@ -18,14 +18,12 @@ from __future__ import annotations
 import asyncio
 import csv
 import os
-from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 import aiohttp
 
-from .config import resource_path
-from .data.news_feed import NewsDataFeed
+from agentic_trading_system.config import resource_path
+from agentic_trading_system.data.news_feed import NewsDataFeed
 
 
 @dataclass
@@ -72,15 +70,16 @@ NEGATIVE_WORDS = {
 }
 
 
-def load_nifty_mapping(csv_path: str) -> Dict[str, str]:
+def load_nifty_mapping(csv_path: str) -> dict[str, str]:
     """Load mapping from company name -> symbol and symbol -> company"""
-    mapping: Dict[str, str] = {}
+    mapping: dict[str, str] = {}
     if not os.path.exists(csv_path):
         return mapping
     with open(csv_path, newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         for row in reader:
-            name = (row.get("Company Name") or row.get("Company Name", "")).strip()
+            name = (row.get("Company Name")
+                    or row.get("Company Name", "")).strip()
             symbol = (row.get("Symbol") or row.get("Symbol", "")).strip()
             if name:
                 mapping[name.lower()] = symbol
@@ -108,7 +107,7 @@ def score_text_sentiment(text: str) -> float:
     return score / min(words, 20)  # cap divisor to avoid tiny numbers
 
 
-async def fetch_news() -> List[dict]:
+async def fetch_news() -> list[dict]:
     """Wrapper around existing NewsDataFeed.get_news_data() to return a list of news items.
 
     Expect the feed to return either a list or dict with keys like 'data' or 'news'.
@@ -130,9 +129,11 @@ async def fetch_news() -> List[dict]:
     return []
 
 
-def match_item_to_symbols(item: dict, mapping: Dict[str, str]) -> List[str]:
+def match_item_to_symbols(item: dict, mapping: dict[str, str]) -> list[str]:
     """Return list of matched symbols for a news item by checking title/content for company names or symbols."""
-    text = " ".join(str(item.get(k, "")) for k in ("title", "description", "content", "summary"))
+    text = " ".join(
+        str(item.get(k, ""))
+        for k in ("title", "description", "content", "summary"))
     t = text.lower()
     matched = set()
     # Simple matching: check each company name or symbol presence
@@ -142,7 +143,8 @@ def match_item_to_symbols(item: dict, mapping: Dict[str, str]) -> List[str]:
     return list(matched)
 
 
-async def analyze_and_recommend(top_n: int = 10) -> List[Tuple[str, str, int, float]]:
+async def analyze_and_recommend(
+        top_n: int = 10) -> list[tuple[str, str, int, float]]:
     """Fetch news, compute sentiment per stock, and return top recommended stocks as tuples:
     (symbol, company, mentions, avg_sentiment_score)
     """
@@ -150,7 +152,7 @@ async def analyze_and_recommend(top_n: int = 10) -> List[Tuple[str, str, int, fl
     mapping = load_nifty_mapping(csv_path)
 
     # reverse mapping symbol->company for nice output
-    symbol_to_company: Dict[str, str] = {}
+    symbol_to_company: dict[str, str] = {}
     # try to populate symbol_to_company by reading the csv again
     if os.path.exists(csv_path):
         with open(csv_path, newline="", encoding="utf-8") as fh:
@@ -165,10 +167,12 @@ async def analyze_and_recommend(top_n: int = 10) -> List[Tuple[str, str, int, fl
     if not items:
         return []
 
-    stats: Dict[str, StockSentiment] = {}
+    stats: dict[str, StockSentiment] = {}
 
     for item in items:
-        text = " ".join(str(item.get(k, "")) for k in ("title", "description", "content", "summary"))
+        text = " ".join(
+            str(item.get(k, ""))
+            for k in ("title", "description", "content", "summary"))
         s = score_text_sentiment(text)
         matched_symbols = match_item_to_symbols(item, mapping)
         # if no symbol matched, try to look for direct mentions of known symbols (simple heuristic)
@@ -197,12 +201,14 @@ async def analyze_and_recommend(top_n: int = 10) -> List[Tuple[str, str, int, fl
     return scored[:top_n]
 
 
-def format_recommendations(recs: List[Tuple[str, str, int, float]]) -> str:
+def format_recommendations(recs: list[tuple[str, str, int, float]]) -> str:
     if not recs:
         return "No recommendations — no news items found or failed to fetch feed."
     lines = ["Top stock recommendations based on current news:\n"]
     for symbol, company, mentions, avg in recs:
-        lines.append(f"{symbol} — {company or 'Unknown Company'} | mentions: {mentions} | avg_sentiment: {avg:.3f}")
+        lines.append(
+            f"{symbol} — {company or 'Unknown Company'} | mentions: {mentions} | avg_sentiment: {avg:.3f}"
+        )
     return "\n".join(lines)
 
 
