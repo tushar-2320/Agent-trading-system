@@ -13,6 +13,3 @@ load_dotenv(
     dotenv_path=resource_path(".envrc"),
     verbose=True,
 )
-
-
-INDIAN_STOCK_MARKET_API_KEY = os.getenv("INDIAN_STOCK_MARKET_API_KEY")

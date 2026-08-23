@@ -1,20 +1,30 @@
-import aiohttp
+import feedparser  # type: ignore
 
-from agentic_trading_system.config import INDIAN_STOCK_MARKET_API_KEY
+rss_feed_urls = [
+    "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/business.xml",
+    "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/economy.xml",
+    "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml",
+]
+
+articles = []
 
 
-class NewsDataFeed:
-    # Need to Add more relevant api
-    @staticmethod
-    async def get_news_data():
-        api_key = INDIAN_STOCK_MARKET_API_KEY
-
-        headers = {
-            "x-api-key": api_key,
+def parse_cnbc_rss(url):
+    _articles = []
+    feed = feedparser.parse(url)
+    for item in feed.entries:
+        # use xml format in prompt.
+        data = {
+            "source": "CNBC-TV18",
+            "title": item.get("title", "").strip(),
+            "url": item.get("link", "").strip(),
+            "description": item.get("summary", "").strip(),
+            "published": item.get("published", "").strip(),
+            "author": item.get("author", "").strip(),
         }
+        _articles.append(data)
+    return _articles
 
-        async with aiohttp.ClientSession() as session:
-            response = await session.get("https://stock.indianapi.in/news",
-                                         headers=headers)
-            response.raise_for_status()
-            return await response.json()
+
+for url in rss_feed_urls:
+    articles.extend(parse_cnbc_rss(url))
